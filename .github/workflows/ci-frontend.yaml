@@ -21,6 +21,9 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend && npm install
+      - name: install Eslint
+        run: |
+            cd frontend && npm install eslint --save-dev
       - name: lint with eslint
         run: |
           npx eslint .
