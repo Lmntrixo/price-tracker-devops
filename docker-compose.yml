@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tracker-postgres
+    environment:
+      POSTGRES_USER: tracker_user
+      POSTGRES_PASSWORD: evanslmntrix
+      POSTGRES_DB: tracker_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+#2 cache redis
+  
+  redis:
+    image: redis:7-alpine
+    container_name: tracker-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+#3.backend api
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tracker-backend
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=tracker_user
+      - POSTGRES_PASSWORD=evanslmntrix
+      - POSTGRES_DB=tracker_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379 
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    restart: always
+
+#4 frontent 
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tracker-frontend
+    ports:
+      - "8080:8080" #port 8080 on host to 8080 inside container
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
