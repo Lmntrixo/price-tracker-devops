@@ -1,0 +1,70 @@
+
+name: ci-cd pipeline for backend
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+#validate code and run tests
+  validate-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+          #use pip cache to speed up installation
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . 
+      - name: Run tests
+        run: |
+          pytest
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    #uses permission to read and write for OIDC token to authenticate with aws
+    permissions:
+      contents: read
+      id-token: write
+    needs: validate-code
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Log in aws
+
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+            role-to-assume: ${{ secrets.AWS_ROLE_NAME }}
+            aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build-docker image
+        run: |
+            docker build -t my-backend-app:${ github.sha } ./backend
+        
+      - name: scan vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: my-backend-app:${ github.sha }
+          format: 'table'
+          exit-code: '1'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # Push docker image to ECR
+      - name: push image to ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: tag and push image
+        run: |
+            docker tag my-backend-app:${ github.sha } ${{ secrets.AWS_ECR_BACKEND_URL }}/my-backend-app:${ github.sha }
+            docker push ${{ secrets.AWS_ECR_BACKEND_URL }}/my-backend-app:${ github.sha }
