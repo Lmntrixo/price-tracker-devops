@@ -26,7 +26,7 @@ jobs:
             cd frontend && npm install eslint --save-dev
       - name: lint with eslint
         run: |
-          npx eslint .
+          cd frontend && npx eslint .
       - name: Run tests
         run: |
             npm test
