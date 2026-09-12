@@ -3,8 +3,13 @@ name: ci-cd pipeline for frontend
 on:
  push:
     branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/ci-frontend.yaml'
  pull_request:
     branches: [main]
+    paths:
+      - 'frontend/**'
 
 jobs:
 #validate code and run tests

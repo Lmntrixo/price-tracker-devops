@@ -3,9 +3,14 @@ name: ci-cd pipeline for backend
 on:
   push:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-backend.yaml'
   pull_request:
     branches: [main]
-
+    paths:
+      - 'backend/**'
+      
 jobs:
 #validate code and run tests
   validate-code:
