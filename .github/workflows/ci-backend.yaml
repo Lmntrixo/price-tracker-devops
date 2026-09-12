@@ -68,8 +68,9 @@ jobs:
 
       # Push docker image to ECR
       - name: push image to ecr
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
       - name: tag and push image
         run: |
-            docker tag my-backend-app:${{ github.sha }} ${{ secrets.AWS_ECR_BACKEND_URL }}/my-backend-app:${{ github.sha }}
-            docker push ${{ secrets.AWS_ECR_BACKEND_URL }}/my-backend-app:${{ github.sha }}
+            docker tag my-backend-app:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/my-backend-app:${{ github.sha }}
+            docker push ${{ steps.login-ecr.outputs.registry }}/my-backend-app:${{ github.sha }}

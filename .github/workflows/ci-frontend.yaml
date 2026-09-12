@@ -60,11 +60,12 @@ jobs:
           severity: CRITICAL,HIGH
 
       - name: push docker image to ecr
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: push docker image
         run: |
-            docker tag my-frontend-app:${{ github.sha }} ${{ secrets.AWS_ECR_BACKEND_URL }}/my-frontend-app:${{ github.sha }}
-            docker push ${{ secrets.AWS_ECR_BACKEND_URL }}/my-frontend-app:${{ github.sha }}
+            docker tag my-frontend-app:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/my-frontend-app:${{ github.sha }}
+            docker push ${{ steps.login-ecr.outputs.registry }}/my-frontend-app:${{ github.sha }}
 
         
