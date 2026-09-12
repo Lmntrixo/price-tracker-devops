@@ -55,12 +55,12 @@ jobs:
 
       - name: Build-docker image
         run: |
-            docker build -t my-backend-app:${ github.sha } ./backend
+            docker build -t my-backend-app:${{ github.sha }} ./backend
         
       - name: scan vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: my-backend-app:${ github.sha }
+          image-ref: my-backend-app:${{ github.sha }}
           format: 'table'
           exit-code: '1'
           vuln-type: 'os,library'
@@ -71,5 +71,5 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
       - name: tag and push image
         run: |
-            docker tag my-backend-app:${ github.sha } ${{ secrets.AWS_ECR_BACKEND_URL }}/my-backend-app:${ github.sha }
-            docker push ${{ secrets.AWS_ECR_BACKEND_URL }}/my-backend-app:${ github.sha }
+            docker tag my-backend-app:${{ github.sha }} ${{ secrets.AWS_ECR_BACKEND_URL }}/my-backend-app:${{ github.sha }}
+            docker push ${{ secrets.AWS_ECR_BACKEND_URL }}/my-backend-app:${{ github.sha }}

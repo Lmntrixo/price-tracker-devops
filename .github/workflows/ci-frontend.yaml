@@ -50,11 +50,11 @@ jobs:
     
       - name: build docker image
         run: | 
-            docker build -t my-frontend-app:${ github.sha } ./frontend
+            docker build -t my-frontend-app:${{ github.sha }} ./frontend
       - name: scan image vulnerabilities with trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: my-frontend-app:${ github.sha }
+          image-ref: my-frontend-app:${{ github.sha }}
           format: 'table'
           exit-code: '1'
           severity: CRITICAL,HIGH
@@ -64,7 +64,7 @@ jobs:
 
       - name: push docker image
         run: |
-            docker tag my-frontend-app:${ github.sha } ${{ secrets.AWS_ECR_BACKEND_URL }}:my-frontend-app-${ github.sha }
-            docker push ${{ secrets.AWS_ECR_BACKEND_URL }}:my-frontend-app-${ github.sha }
+            docker tag my-frontend-app:${{ github.sha }} ${{ secrets.AWS_ECR_BACKEND_URL }}/my-frontend-app:${{ github.sha }}
+            docker push ${{ secrets.AWS_ECR_BACKEND_URL }}/my-frontend-app:${{ github.sha }}
 
         
