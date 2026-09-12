@@ -20,4 +20,4 @@ app.add_middleware(
 # Define a simple test route
 @app.get("/")
 async def read_root():
-    return {"status": "online", "message": "API Price Tracker opérationnelle"}
+    return {"status": "online", "message": "API Price Tracker is ready"}
