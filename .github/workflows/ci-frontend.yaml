@@ -58,7 +58,6 @@ jobs:
           format: 'table'
           exit-code: '1'
           severity: CRITICAL,HIGH
-          trivyignorefile: .trivyignore
 
       - name: push docker image to ecr
         uses: aws-actions/amazon-ecr-login@v2
