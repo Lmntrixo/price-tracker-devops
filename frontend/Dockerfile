@@ -8,6 +8,8 @@ RUN npm run build
 
 #stage:final
 FROM nginx:1.27-alpine as final
+#update os
+RUN apk update && apk upgrade --no-cache
 WORKDIR /usr/share/nginx/html
 #security: create nonroot user
 RUN addgroup -g 10001 appgroup && adduser -u 10001 -G appgroup -s /bin/sh -D appuser

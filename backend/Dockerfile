@@ -18,6 +18,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 #second stage: final
 FROM python:3.12-slim as final
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 WORKDIR /app 
 RUN groupadd -g 10001 appgroup && useradd -u 10001 -g appgroup -s /bin/bash -m appuser
 COPY --from=builder --chown=appuser:appgroup /root/.local /home/appuser/.local
