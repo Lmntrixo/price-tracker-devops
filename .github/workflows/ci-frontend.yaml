@@ -51,7 +51,7 @@ jobs:
       - name: build docker image
         run: | 
             docker build -t my-frontend-app:${ github.sha } ./frontend
-      - name: scan vulnerabilities with trivy
+      - name: scan image vulnerabilities with trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: my-frontend-app:${ github.sha }
