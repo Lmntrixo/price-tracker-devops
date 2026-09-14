@@ -101,6 +101,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           document-name: AWS-RunShellScript
           instance-ids: ${{ secrets.AWS_EC2_INSTANCE_ID }}
+          wait-for-output: true
           command: |
               COMMAND=$(set -e
               # 1.updating repositories and install docker if not installed
@@ -113,7 +114,7 @@ jobs:
               cd /home/ubuntu/app
 
               # writing docker-compose.prod.yml file to the server
-              sudo tee docker-compose.prod.yml > /dev/null/ << 'EOF'
+              sudo tee docker-compose.prod.yml > /dev/null << 'EOF'
 
               services:
                 postgres:
@@ -162,8 +163,8 @@ jobs:
                 redis_data:
               EOF
 
-              import secret password for postgres from ssm and write persistant envfile
-              PGPASS=$(aws ssm get-parameter --name "/price/tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region {{ secrets.AWS_REGION }} ")
+              # import secret password for postgres from ssm and write persistant envfile
+              PGPASS=$(aws ssm get-parameter --name "/price-tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region {{ secrets.AWS_REGION }} )
               sudo tee .env > /dev/null << EOF
               POSTGRES_PASSWORD=$PGPASS
               POSTGRES_USER=tracker_user
@@ -186,7 +187,7 @@ jobs:
               #4. download latest version of image and rerun the infrastructure
               #cd /home/ubuntu/app
               docker compose -f docker-compose.prod.yml pull
-              docker compose -f docker-compose.prod.yml up -d --remove orphans)
+              docker compose -f docker-compose.prod.yml up -d --remove-orphans)
               echo $COMMAND
 
         
