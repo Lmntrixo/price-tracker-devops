@@ -93,8 +93,9 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       
       - name: AWS SSM send command to deploy
-        uses: peterkimZZ/aws-ssm-run-command@v2
+        uses: zAbuQasem/ssm-run-command@v2
         with:
+          aws-region: ${{ secrets.AWS_REGION }}
           document-name: AWS-RunShellScript
           targets: '[{"key":"InstanceIDs","values":["${{ secrets.AWS_EC2_INSTANCE_ID }}"]}]'
           command: |
@@ -158,7 +159,7 @@ jobs:
                 redis_data:
               EOF
 
-              #import secret password for postgres from ssm and write persistant envfile
+              import secret password for postgres from ssm and write persistant envfile
               PGPASS=$(aws ssm get-parameter --name "/price/tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region {{ secrets.AWS_REGION }} ")
               sudo tee .env > /dev/null << EOF
               POSTGRES_PASSWORD=$PGPASS
@@ -170,21 +171,24 @@ jobs:
               AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}
               AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}
               EOF
-            
-              sudo chmod 600 .env
+
+
               #.log to ECR to download images
 
               aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS \
                 --password-stdin ${{ secrets.AWS_ECR_BACKEND_URL}}
-
               # 3.create a repertory for prod
               # mkdir -p /home/ubuntu/
+              
+              #export variables env for dockercompose
+              export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
+              export AWS_REGION=${{ secrets.AWS_REGION }}
+              export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
 
               #4. download latest version of image and rerun the infrastructure
               #cd /home/ubuntu/app
-
-              docker compose --env-file .env-f docker-compose.prod.yml pull
-              docker compose --env-file .env -f docker-compose.prod.yml up -d --remove-orphans
+              docker compose -f docker-compose.prod.yml pull
+              docker compose -f docker-compose.prod.yml up -d --remove orphans
 
         
 

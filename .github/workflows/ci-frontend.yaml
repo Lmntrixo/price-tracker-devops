@@ -85,10 +85,11 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       
       - name: AWS SSM send command to deploy
-        uses: peterkimZZ/aws-ssm-run-command@v2
+        uses: zAbuQasem/ssm-run-command@v2
         with:
           document-name: AWS-RunShellScript
-          targets: '[{"key":"InstanceIDs","values":["${{ secrets.AWS_EC2_INSTANCE_ID }}"]}]'
+          aws-region: $ {{ secrets.AWS_REGION}}
+          instance-ids: ${{ secrets.AWS_EC2_INSTANCE_ID }}
           command: |
               set -e
               # 1.updating repositories and install docker if not installed
