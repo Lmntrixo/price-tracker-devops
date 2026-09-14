@@ -180,7 +180,7 @@ jobs:
 
               aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS \
                 --password-stdin ${{ secrets.AWS_ECR_BACKEND_URL}}
-              # 3.create a repertory for prod
+              # 3.create a repertory for production
               # mkdir -p /home/ubuntu/
               
               #export variables env for dockercompose
