@@ -173,8 +173,8 @@ jobs:
               POSTGRES_HOST=postgres
               REDIS_HOST=redis
               REDIS_PORT=6379
-              AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}
-              AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}
+              AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}:${{ github.sha }}
+              AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}:${{ github.sha }}
               EOF
 
 
