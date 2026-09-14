@@ -112,7 +112,7 @@ jobs:
 
               #.create a repetory for prod
               mkdir -p /home/ubuntu/app
-              cd /home/ubuntu/app
+              sudo cd /home/ubuntu/app
 
               # writing docker-compose.prod.yml file to the server
               sudo tee docker-compose.prod.yml > /dev/null << 'EOF'
@@ -165,7 +165,7 @@ jobs:
               EOF
 
               # import secret password for postgres from ssm and write persistant envfile
-              PGPASS=$(aws ssm get-parameter --name "/price-tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region {{ secrets.AWS_REGION }} )
+              PGPASS=$(aws ssm get-parameter --name "/price-tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region eu-central-1 )
               sudo tee .env > /dev/null << EOF
               POSTGRES_PASSWORD=$PGPASS
               POSTGRES_USER=tracker_user
