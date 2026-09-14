@@ -112,7 +112,7 @@ jobs:
 
               #.create a repetory for prod
               mkdir -p /home/ubuntu/app
-              sudo cd /home/ubuntu/app
+              cd /home/ubuntu/app
 
               # writing docker-compose.prod.yml file to the server
               sudo tee docker-compose.prod.yml > /dev/null << 'EOF'
