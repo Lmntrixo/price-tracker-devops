@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tracker-postgres
+    environment: 
+      POSTGRES_USER: tracker_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: tracker_db
+    ports: 
+      - "5432:5432"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    restart: always
+  
+  redis:
+    image: redis:7-alpine
+    container_name: tracker-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  backend:
+    image: ${AWS_ECR_BACKEND_URL}://
+    container_name: tracker-prod-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=tracker_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=tracker_db
+      - REDIS_HOST=redis
+      - REDIS_PORT="6379"
+
+    depends_on:
+      - postgres
+      - redis
+    restart: always
+  
+  frontend:
+    image: ${AWS_ECR_FRONTEND_URL}://
+    container_name: tracker-prod-frontend
+    ports:
+      - "80:8080"
+    
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_prod_data:
+  redis_data:

@@ -73,4 +73,108 @@ jobs:
             docker tag my-frontend-app:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/my-frontend-app:${{ github.sha }}
             docker push ${{ steps.login-ecr.outputs.registry }}/my-frontend-app:${{ github.sha }}
 
+  deploy-to-ec2:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Deploy to EC2
+      #loging to aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: AWS SSM send command to deploy
+        uses: peterkimZZ/aws-ssm-run-command@v2
+        with:
+          document-name: AWS-RunShellScript
+          targets: '[{"key":"InstanceIDs","values":["${{ secrets.AWS_EC2_INSTANCE_ID }}"]}]'
+          command: |
+              set -e
+              # 1.updating repositories and install docker if not installed
+              if ! command -v docker &> /dev/null; then
+                 sudo apt update && sudo apt install docker.io docker-compose-v2
+              fi
+
+              #.create a repetory for prod
+              mkdir -p /home/ubuntu/app
+              cd /home/ubuntu/app
+
+              # writing docker-compose.prod.yml file to the server
+              sudo tee docker-compose.prod.yml > /dev/null/ << 'EOF'
+
+              services:
+                postgres:
+                  image: postgres:16-alpine
+                  container_name: tracker-postgres
+                  env_file: .env
+                  ports: 
+                    - "5432:5432"
+                  volumes:
+                    - postgres_prod_data:/var/lib/postgresql/data
+                  restart: always
+                
+                redis:
+                  image: redis:7-alpine
+                  container_name: tracker-redis
+                  ports:
+                    - "6379:6379"
+                  volumes:
+                    - redis_data:/data
+                  restart: always
+
+                backend:
+                  image: ${AWS_ECR_BACKEND_URL}
+                  container_name: tracker-prod-backend
+                  ports:
+                    - "8000:8000"
+                  env_file: .env
+
+                  depends_on:
+                    - postgres
+                    - redis
+                  restart: always
+                
+                frontend:
+                  image: ${AWS_ECR_FRONTEND_URL}
+                  container_name: tracker-prod-frontend
+                  ports:
+                    - "80:8080"
+                  
+                  depends_on:
+                    - backend
+                  restart: always
+
+              volumes:
+                postgres_prod_data:
+                redis_data:
+              EOF
+
+              #import secret password for postgres from ssm and write persistant envfile
+              PGPASS=$(aws ssm get-parameter --name "/price/tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region {{ secrets.AWS_REGION }} ")
+              sudo tee .env > /dev/null << EOF
+              POSTGRES_PASSWORD=$PGPASS
+              POSTGRES_USER=tracker_user
+              POSTGRES_DB=tracker_db
+              POSTGRES_HOST=postgres
+              REDIS_HOST=redis
+              REDIS_PORT=6379
+              AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}
+              AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}
+              EOF
+            
+              sudo chmod 600 .env
+              #.log to ECR to download images
+
+              aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS \
+                --password-stdin ${{ secrets.AWS_ECR_BACKEND_URL}}
+
+              # 3.create a repertory for prod
+              # mkdir -p /home/ubuntu/
+
+              #4. download latest version of image and rerun the infrastructure
+              #cd /home/ubuntu/app
+
+              docker compose --env-file .env-f docker-compose.prod.yml pull
+              docker compose --env-file .env -f docker-compose.prod.yml up -d --remove-orphans
         
