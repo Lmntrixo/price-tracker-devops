@@ -100,9 +100,9 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           document-name: AWS-RunShellScript
-          targets: '[{"key":"InstanceIDs","values":["${{ secrets.AWS_EC2_INSTANCE_ID }}"]}]'
+          instance-ids: ${{ secrets.AWS_EC2_INSTANCE_ID }}
           command: |
-              set -e
+              COMMAND=$(set -e
               # 1.updating repositories and install docker if not installed
               if ! command -v docker &> /dev/null; then
                  sudo apt update && sudo apt install docker.io docker-compose-v2
@@ -183,15 +183,11 @@ jobs:
               # 3.create a repertory for production
               # mkdir -p /home/ubuntu/
               
-              #export variables env for dockercompose
-              export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
-              export AWS_REGION=${{ secrets.AWS_REGION }}
-              export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-
               #4. download latest version of image and rerun the infrastructure
               #cd /home/ubuntu/app
               docker compose -f docker-compose.prod.yml pull
-              docker compose -f docker-compose.prod.yml up -d --remove orphans
+              docker compose -f docker-compose.prod.yml up -d --remove orphans)
+              echo $COMMAND
 
         
 
