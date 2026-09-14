@@ -104,9 +104,10 @@ jobs:
           wait-for-output: true
           command: |
               COMMAND=$(set -e
+              export DEBIAN_FRONTEND=noninteractive
               # 1.updating repositories and install docker if not installed
               if ! command -v docker &> /dev/null; then
-                 sudo apt update && sudo apt install docker.io docker-compose-v2
+                 sudo apt update && sudo apt install -y docker.io docker-compose-v2
               fi
 
               #.create a repetory for prod
