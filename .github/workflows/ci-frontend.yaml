@@ -76,6 +76,9 @@ jobs:
   deploy-to-ec2:
     runs-on: ubuntu-latest
     needs: build-and-push
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Deploy to EC2
       #loging to aws
@@ -88,7 +91,7 @@ jobs:
         uses: zAbuQasem/ssm-run-command@v2
         with:
           document-name: AWS-RunShellScript
-          aws-region: $ {{ secrets.AWS_REGION}}
+          aws-region: ${{ secrets.AWS_REGION }}
           instance-ids: ${{ secrets.AWS_EC2_INSTANCE_ID }}
           command: |
               set -e
