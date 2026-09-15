@@ -1,0 +1,123 @@
+name: Cd deploy to EC2
+
+on:
+    workflow_run:
+        workflows: ["CI Backend", "CI Frontend"]
+        types:
+            - completed
+
+jobs:
+    deploy-to-ec2:
+        runs-on: ubuntu-latest
+        if: ${{ github.event.workflow_run.conclusion == 'success'}}
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+            - name: deploy to ec2
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                aws-region: ${{ secrets.AWS_REGION }}
+            - name: AWS SSM send command to deploy
+              uses: zAbuQasem/ssm-run-command@v2
+              with:
+                aws-region: ${{ secrets.AWS_REGION }}
+                document-name: AWS-RunShellScript
+                instance-ids: ${{ secrets.AWS_EC2_INSTANCE_ID }}
+                wait-for-output: true
+                command: |
+                    COMMAND=$(
+                        export DEBIAN_FRONTEND=noninteractive
+                        #update repositories and install docker and docker compose
+                        if ! command docker -v &> /dev/null; then
+                            sudo apt update && sudo apt install -y docker.io docker-compose-v2
+                        fi
+
+                        #create a directory for prod
+                        mkdir -p /home/ubuntu/app
+                        cd /home/ubuntu/app
+
+                        #write docker-compose.prod.yml for prod
+                        sudo tee docker-compose.prod.yml > /dev/null << 'EOF'
+                        services:
+                        postgres:
+                            image: postgres:16-alpine
+                            container_name: tracker-postgres
+                            env_file: .env
+                            ports: 
+                                - "5432:5432"
+                            volumes:
+                                - postgres_prod_data:/var/lib/postgresql/data
+                            restart: always
+                        
+                        redis:
+                            image: redis:7-alpine
+                            container_name: tracker-redis
+                            ports:
+                                - "6379:6379"
+                            volumes:
+                                - redis_data:/data
+                            restart: always
+
+                        backend:
+                            image: ${AWS_ECR_BACKEND_URL}
+                            container_name: tracker-prod-backend
+                            ports:
+                                - "8000:8000"
+                            env_file: .env
+
+                            depends_on:
+                                - postgres
+                                - redis
+                            restart: always
+                        
+                        frontend:
+                            image: ${AWS_ECR_FRONTEND_URL}
+                            container_name: tracker-prod-frontend
+                            ports:
+                                - "80:8080"
+                        
+                            depends_on:
+                                - backend
+                            restart: always
+
+                    volumes:
+                        postgres_prod_data:
+                        redis_data:
+                    EOF
+
+                    # import secret password for postgres from ssm and write persistant envfile
+                    PGPASS=$(aws ssm get-parameter --name "/price-tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region eu-central-1 )
+                    if [ ! -f .env ]; then
+                    sudo tee .env > /dev/null << EOF
+                    POSTGRES_PASSWORD=$PGPASS
+                    POSTGRES_USER=tracker_user
+                    POSTGRES_DB=tracker_db
+                    POSTGRES_HOST=postgres
+                    REDIS_HOST=redis
+                    REDIS_PORT=6379
+                    AWS_ECR_BACKEND_URL=
+                    AWS_ECR_FRONTEND_URL=
+                    EOF
+                    fi
+
+                    #updating the image that have changed
+                    NEW-SHA="${{ github.event.workflow_run.head_sha }}"
+                    WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+
+                    if [ "$WORKFLOW_NAME" == "CI Frontend" ]; then
+                        sed -i "s|AWS_ECR_FRONTEND_URL=.*|AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}:${NEW_SHA}|" .env
+                    elif [ "$WORKFOW_NAME" == "CI Backend" ]; then
+                        sed -i "s|AWS_ECR_BACKEND_URL=.*|AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}:${NEW_SHA}|" .env
+                    fi
+
+                    #connecting to ECR(using base URL without tag to connect)
+                    aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_BACKEND_URL }}
+
+                    #inteligent deployment
+                    docker compose -f docker-compose.prod.yml pull
+                    docker compose -f docker-compose.prod.yml up -d --remove-orphans
+                    )
+                    echo $COMMAND
+                
