@@ -64,7 +64,7 @@ jobs:
           exit-code: '1'
           severity: CRITICAL,HIGH
 
-      - name: push docker image to ecr
+      - name: push docker image to AWS ecr
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 

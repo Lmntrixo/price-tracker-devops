@@ -27,10 +27,10 @@ jobs:
                 instance-ids: ${{ secrets.AWS_EC2_INSTANCE_ID }}
                 wait-for-output: true
                 command: |
-                    COMMAND=$(
+                        set -e
                         export DEBIAN_FRONTEND=noninteractive
                         #update repositories and install docker and docker compose
-                        if ! command -v docker &> /dev/null; then
+                        if ! command -v docker > /dev/null 2>&1; then
                             sudo apt update && sudo apt install -y docker.io docker-compose-v2
                         fi
 
@@ -87,42 +87,41 @@ jobs:
                             redis_data:
                         EOF
 
-                    # import secret password for postgres from ssm and write persistant envfile
-                    PGPASS=$(aws ssm get-parameter --name "/price-tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region eu-central-1 )
-                    if [ ! -f .env ]; then
-                    sudo tee .env > /dev/null << EOF2
-                    POSTGRES_PASSWORD=$PGPASS
-                    POSTGRES_USER=tracker_user
-                    POSTGRES_DB=tracker_db
-                    POSTGRES_HOST=postgres
-                    REDIS_HOST=redis
-                    REDIS_PORT=6379
-                    AWS_ECR_BACKEND_URL=
-                    AWS_ECR_FRONTEND_URL=
-                    EOF2
+                        # import secret password for postgres from ssm and write persistant envfile
+                        PGPASS=$(aws ssm get-parameter --name "/price-tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region eu-central-1 )
+                        if [ ! -f .env ]; then
+                        sudo tee .env > /dev/null << EOF2
+                        POSTGRES_PASSWORD=$PGPASS
+                        POSTGRES_USER=tracker_user
+                        POSTGRES_DB=tracker_db
+                        POSTGRES_HOST=postgres
+                        REDIS_HOST=redis
+                        REDIS_PORT=6379
+                        AWS_ECR_BACKEND_URL=
+                        AWS_ECR_FRONTEND_URL=
+                        EOF2
 
-                    fi
+                        fi
 
-                    sudo chmod 600 .env
+                        sudo chmod 600 .env
 
-                    #updating the image that have changed
-                    NEW_SHA="${{ github.event.workflow_run.head_sha }}"
-                    WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+                        #updating the image that have changed
+                        NEW_SHA="${{ github.event.workflow_run.head_sha }}"
+                        WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
 
-                    if [ "$WORKFLOW_NAME" = "CI Frontend" ]; then
-                        sed -i "s|AWS_ECR_FRONTEND_URL=.*|AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}:${NEW_SHA}|" .env
-                    fi
+                        if [ "$WORKFLOW_NAME" = "CI Frontend" ]; then
+                           sed -i "s|AWS_ECR_FRONTEND_URL=.*|AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}:${NEW_SHA}|" .env
+                        fi
 
-                    if [ "$WORKFLOW_NAME" = "CI Backend" ]; then
-                        sed -i "s|AWS_ECR_BACKEND_URL=.*|AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}:${NEW_SHA}|" .env
-                    fi
+                        if [ "$WORKFLOW_NAME" = "CI Backend" ]; then
+                            sed -i "s|AWS_ECR_BACKEND_URL=.*|AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}:${NEW_SHA}|" .env
+                        fi
 
-                    #connecting to ECR(using base URL without tag to connect)
-                    aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_BACKEND_URL }}
+                        #connecting to ECR(using base URL without tag to connect)
+                        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_BACKEND_URL }}
 
-                    #inteligent deployment
-                    sudo docker compose -f docker-compose.prod.yml pull
-                    sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
-                    )
-                    echo "$COMMAND"
+                        #inteligent deployment
+                        sudo docker compose -f docker-compose.prod.yml pull
+                        sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
+                    
                 
