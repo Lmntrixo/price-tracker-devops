@@ -90,7 +90,7 @@ jobs:
                     # import secret password for postgres from ssm and write persistant envfile
                     PGPASS=$(aws ssm get-parameter --name "/price-tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region eu-central-1 )
                     if [ ! -f .env ]; then
-                    sudo tee .env > /dev/null << EOF
+                    sudo tee .env > /dev/null << EOF2
                     POSTGRES_PASSWORD=$PGPASS
                     POSTGRES_USER=tracker_user
                     POSTGRES_DB=tracker_db
@@ -99,8 +99,10 @@ jobs:
                     REDIS_PORT=6379
                     AWS_ECR_BACKEND_URL=
                     AWS_ECR_FRONTEND_URL=
-                    EOF
+                    EOF2
+                    
                     fi
+
                     sudo chmod 600 .env
 
                     #updating the image that have changed
@@ -110,6 +112,7 @@ jobs:
                     if [ "$WORKFLOW_NAME" = "CI Frontend" ]; then
                         sed -i "s|AWS_ECR_FRONTEND_URL=.*|AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}:${NEW_SHA}|" .env
                     fi
+
                     if [ "$WORKFLOW_NAME" = "CI Backend" ]; then
                         sed -i "s|AWS_ECR_BACKEND_URL=.*|AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}:${NEW_SHA}|" .env
                     fi
