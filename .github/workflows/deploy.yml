@@ -85,7 +85,7 @@ jobs:
                         volumes:
                             postgres_prod_data:
                             redis_data:
-                    EOF
+                        EOF
 
                     # import secret password for postgres from ssm and write persistant envfile
                     PGPASS=$(aws ssm get-parameter --name "/price-tracer/prod/POSTGRES_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region eu-central-1 )
@@ -101,7 +101,7 @@ jobs:
                     AWS_ECR_FRONTEND_URL=
                     EOF
                     fi
-                    sudo chown 600 .env
+                    sudo chmod 600 .env
 
                     #updating the image that have changed
                     NEW_SHA="${{ github.event.workflow_run.head_sha }}"
@@ -118,8 +118,8 @@ jobs:
                     aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_BACKEND_URL }}
 
                     #inteligent deployment
-                    docker compose -f docker-compose.prod.yml pull
-                    docker compose -f docker-compose.prod.yml up -d --remove-orphans
+                    sudo docker compose -f docker-compose.prod.yml pull
+                    sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
                     )
                     echo $COMMAND
                 
