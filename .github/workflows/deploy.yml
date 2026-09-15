@@ -118,7 +118,7 @@ jobs:
                         fi
 
                         #connecting to ECR(using base URL without tag to connect)
-                        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_BACKEND_URL }}
+                        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REGISTRY }}
 
                         #inteligent deployment
                         sudo docker compose -f docker-compose.prod.yml pull
