@@ -72,7 +72,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
 
-      # Push docker image to ECR
+      # Push docker image to AWS ECR
       - name: push image to ecr
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2

@@ -30,7 +30,7 @@ jobs:
                     COMMAND=$(
                         export DEBIAN_FRONTEND=noninteractive
                         #update repositories and install docker and docker compose
-                        if ! command docker -v &> /dev/null; then
+                        if ! command -v docker &> /dev/null; then
                             sudo apt update && sudo apt install -y docker.io docker-compose-v2
                         fi
 
@@ -41,50 +41,50 @@ jobs:
                         #write docker-compose.prod.yml for prod
                         sudo tee docker-compose.prod.yml > /dev/null << 'EOF'
                         services:
-                        postgres:
-                            image: postgres:16-alpine
-                            container_name: tracker-postgres
-                            env_file: .env
-                            ports: 
-                                - "5432:5432"
-                            volumes:
-                                - postgres_prod_data:/var/lib/postgresql/data
-                            restart: always
-                        
-                        redis:
-                            image: redis:7-alpine
-                            container_name: tracker-redis
-                            ports:
-                                - "6379:6379"
-                            volumes:
-                                - redis_data:/data
-                            restart: always
+                            postgres:
+                                image: postgres:16-alpine
+                                container_name: tracker-postgres
+                                env_file: .env
+                                ports: 
+                                    - "5432:5432"
+                                volumes:
+                                    - postgres_prod_data:/var/lib/postgresql/data
+                                restart: always
+                            
+                            redis:
+                                image: redis:7-alpine
+                                container_name: tracker-redis
+                                ports:
+                                    - "6379:6379"
+                                volumes:
+                                    - redis_data:/data
+                                restart: always
 
-                        backend:
-                            image: ${AWS_ECR_BACKEND_URL}
-                            container_name: tracker-prod-backend
-                            ports:
-                                - "8000:8000"
-                            env_file: .env
+                            backend:
+                                image: ${AWS_ECR_BACKEND_URL}
+                                container_name: tracker-prod-backend
+                                ports:
+                                    - "8000:8000"
+                                env_file: .env
 
-                            depends_on:
-                                - postgres
-                                - redis
-                            restart: always
-                        
-                        frontend:
-                            image: ${AWS_ECR_FRONTEND_URL}
-                            container_name: tracker-prod-frontend
-                            ports:
-                                - "80:8080"
-                        
-                            depends_on:
-                                - backend
-                            restart: always
+                                depends_on:
+                                    - postgres
+                                    - redis
+                                restart: always
+                            
+                            frontend:
+                                image: ${AWS_ECR_FRONTEND_URL}
+                                container_name: tracker-prod-frontend
+                                ports:
+                                    - "80:8080"
+                            
+                                depends_on:
+                                    - backend
+                                restart: always
 
-                    volumes:
-                        postgres_prod_data:
-                        redis_data:
+                        volumes:
+                            postgres_prod_data:
+                            redis_data:
                     EOF
 
                     # import secret password for postgres from ssm and write persistant envfile
@@ -101,6 +101,7 @@ jobs:
                     AWS_ECR_FRONTEND_URL=
                     EOF
                     fi
+                    sudo chown 600 .env
 
                     #updating the image that have changed
                     NEW_SHA="${{ github.event.workflow_run.head_sha }}"
@@ -108,7 +109,8 @@ jobs:
 
                     if [ "$WORKFLOW_NAME" = "CI Frontend" ]; then
                         sed -i "s|AWS_ECR_FRONTEND_URL=.*|AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}:${NEW_SHA}|" .env
-                    elif [ "$WORKFLOW_NAME" = "CI Backend" ]; then
+                    fi
+                        if [ "$WORKFLOW_NAME" = "CI Backend" ]; then
                         sed -i "s|AWS_ECR_BACKEND_URL=.*|AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}:${NEW_SHA}|" .env
                     fi
 
