@@ -110,7 +110,7 @@ jobs:
                     if [ "$WORKFLOW_NAME" = "CI Frontend" ]; then
                         sed -i "s|AWS_ECR_FRONTEND_URL=.*|AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}:${NEW_SHA}|" .env
                     fi
-                        if [ "$WORKFLOW_NAME" = "CI Backend" ]; then
+                    if [ "$WORKFLOW_NAME" = "CI Backend" ]; then
                         sed -i "s|AWS_ECR_BACKEND_URL=.*|AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}:${NEW_SHA}|" .env
                     fi
 
