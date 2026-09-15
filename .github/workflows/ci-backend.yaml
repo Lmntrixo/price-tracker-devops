@@ -58,7 +58,7 @@ jobs:
             role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
             aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Build-docker image
+      - name: Build docker images
         run: |
             docker build -t my-backend-app:${{ github.sha }} ./backend
         
