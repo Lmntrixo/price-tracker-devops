@@ -103,12 +103,12 @@ jobs:
                     fi
 
                     #updating the image that have changed
-                    NEW-SHA="${{ github.event.workflow_run.head_sha }}"
+                    NEW_SHA="${{ github.event.workflow_run.head_sha }}"
                     WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
 
-                    if [ "$WORKFLOW_NAME" == "CI Frontend" ]; then
+                    if [ "$WORKFLOW_NAME" = "CI Frontend" ]; then
                         sed -i "s|AWS_ECR_FRONTEND_URL=.*|AWS_ECR_FRONTEND_URL=${{ secrets.AWS_ECR_FRONTEND_URL }}:${NEW_SHA}|" .env
-                    elif [ "$WORKFOW_NAME" == "CI Backend" ]; then
+                    elif [ "$WORKFLOW_NAME" = "CI Backend" ]; then
                         sed -i "s|AWS_ECR_BACKEND_URL=.*|AWS_ECR_BACKEND_URL=${{ secrets.AWS_ECR_BACKEND_URL }}:${NEW_SHA}|" .env
                     fi
 
