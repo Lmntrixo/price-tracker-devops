@@ -100,7 +100,7 @@ jobs:
                     AWS_ECR_BACKEND_URL=
                     AWS_ECR_FRONTEND_URL=
                     EOF2
-                    
+
                     fi
 
                     sudo chmod 600 .env
@@ -124,5 +124,5 @@ jobs:
                     sudo docker compose -f docker-compose.prod.yml pull
                     sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
                     )
-                    echo $COMMAND
+                    echo "$COMMAND"
                 

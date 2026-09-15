@@ -53,7 +53,7 @@ jobs:
             role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
             aws-region: ${{ secrets.AWS_REGION }}     
     
-      - name: build frontend docker image
+      - name: build frontend docker-image
         run: | 
             docker build -t my-frontend-app:${{ github.sha }} ./frontend
       - name: scan images vulnerabilities with trivy
