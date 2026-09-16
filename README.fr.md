@@ -27,7 +27,7 @@ Une application multi-services (frontend + backend + base de données) déployé
 
 ## Architecture
 
-\`\`\`mermaid
+```mermaid
 flowchart TD
     subgraph GH["GitHub Actions"]
         CIF["ci-frontend.yml<br/>filtre de chemin : frontend/**"]
@@ -53,7 +53,7 @@ flowchart TD
 
     ECR -.pull.-> BACK
     ECR -.pull.-> FRONT
-\`\`\`
+```
 
 Chaque pipeline de build (`ci-frontend`, `ci-backend`) ne se déclenche que si les fichiers du service correspondant ont changé. Le workflow `deploy.yml` est découplé des builds : il est déclenché par l'événement `workflow_run` et lit `github.event.workflow_run.name` pour savoir exactement quel service redéployer — sans jamais toucher aux autres conteneurs (`postgres` et `redis` continuent de tourner en continu).
 
@@ -76,7 +76,7 @@ Chaque pipeline de build (`ci-frontend`, `ci-backend`) ne se déclenche que si l
 
 ## Structure du repo
 
-\`\`\`
+```
 price-tracer-devops/
 ├── backend/                  # API et logique métier
 │   ├── [...]
@@ -90,7 +90,7 @@ price-tracer-devops/
 │       ├── ci-backend.yml    # Build + push de l'image backend
 │       └── deploy.yml        # Déploiement ciblé sur EC2 via SSM
 └── docker-compose.prod.yml   # Généré/mis à jour par le pipeline de déploiement
-\`\`\`
+```
 
 ## Pipeline CI/CD
 
@@ -114,7 +114,7 @@ Aucune clé AWS statique n'est stockée dans GitHub : l'authentification passe p
 
 ### Installation
 
-\`\`\`bash
+```bash
 git clone https://github.com/Lmntrixo/price-tracer-devops.git
 cd price-tracer-devops
 
@@ -131,9 +131,9 @@ npm start
 
 ### Lancer avec Docker Compose
 
-\`\`\`bash
+```bash
 docker compose up -d
-\`\`\`
+```
 
 L'application est ensuite disponible à :
 - Frontend : `http://localhost:3000`
@@ -141,9 +141,9 @@ L'application est ensuite disponible à :
 
 ## Variables d'environnement
 
-Créez un fichier `.env` à la racine (voir `.env.example` s'il existe) avec :
+Créez un fichier `.env` à la racine (voir `.env.example`) avec :
 
-\`\`\`
+```
 POSTGRES_USER=
 POSTGRES_PASSWORD=
 POSTGRES_DB=
@@ -151,7 +151,7 @@ POSTGRES_HOST=
 REDIS_HOST=
 REDIS_PORT=
 # [Autres variables spécifiques au backend/frontend]
-\`\`\`
+```
 
 > En production, `POSTGRES_PASSWORD` est géré via AWS SSM Parameter Store (SecureString) et n'est jamais stocké dans les GitHub Secrets ni committé dans le repo.
 
