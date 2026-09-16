@@ -13,8 +13,7 @@ function App() {
 
   return (
     <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', textAlign: 'center' }}>
-      <h1>📊 My Price Tracker app Dashboard</h1>
-      <h1>JE T"AIME CALINE, A LA FOLIE MA GOJOLINA </h1>
+      <h1>📊 JE T"AIME CALINE, A LA FOLIE MA GOJOLINA</h1>
       <div style={{ marginTop: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
         <p>Statut du Backend : <strong>{apiMessage}</strong></p>
       </div>
